@@ -20,13 +20,8 @@ package com.deem.zkui.utils;
 import com.deem.zkui.vo.LeafBean;
 import com.deem.zkui.vo.ZKNode;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -55,7 +50,7 @@ public enum ZooKeeperUtil {
 
     private final static org.slf4j.Logger logger = LoggerFactory.getLogger(ZooKeeperUtil.class);
 
-    public ZooKeeper createZKConnection(String url, Integer zkSessionTimeout) throws IOException, InterruptedException {
+    public ZooKeeper createZKConnection(String url, Integer zkSessionTimeout, Properties globalProps) throws IOException, InterruptedException {
         Integer connectAttempt = 0;
         ZooKeeper zk = new ZooKeeper(url, zkSessionTimeout, new Watcher() {
             @Override
@@ -63,6 +58,12 @@ public enum ZooKeeperUtil {
                 logger.trace("Connecting to ZK.");
             }
         });
+        String scheme = globalProps.getProperty("authInfo.scheme");
+        if (scheme != null) {
+            String user = globalProps.getProperty("authInfo.user");
+            String password = globalProps.getProperty("authInfo.password");
+            zk.addAuthInfo(scheme, (user + ":" + password).getBytes());
+        }
         //Wait till connection is established.
         while (zk.getState() != ZooKeeper.States.CONNECTED) {
             Thread.sleep(30);
